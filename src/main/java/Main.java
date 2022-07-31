@@ -13,32 +13,26 @@ import java.util.Random;
 public class Main {
 
     final static int PAGE_CRAWL_LIMIT = 10;
+    final static String STARTING_URL = "https://en.wikipedia.org/wiki/Thalassodromeus";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
-        String startingURL = "https://en.wikipedia.org/wiki/Thalassodromeus";
-        String[] stringList = getWordList(startingURL);
-        ArrayList<String> pageUrls = pullPageLinks(startingURL);
+        String[] stringList = getWordList(STARTING_URL);
+        ArrayList<String> pageUrls = pullPageLinks(STARTING_URL);
         HashMap<String, Integer> dictionary = makeWordDictionary(stringList);
         int counter = 1;
-        Random random = new Random();
 
         while (counter < PAGE_CRAWL_LIMIT) {
-            int randomNum = random.nextInt(pageUrls.size()-1);
-            String newPage = pageUrls.get(randomNum);
-            String[] newWordList = getWordList(newPage);
-            ArrayList<String> newUrlList = pullPageLinks(newPage);
-            HashMap<String, Integer> newDict = makeWordDictionary(newWordList);
-            dictionary = dictionaryMerge(dictionary, newDict);
+            dictionary = retrieveDictionary(pageUrls, dictionary);
+            System.out.println("Pages crawled: " + counter);
             ++counter;
+            Thread.sleep(50L);
         }
 
         cleanDictionary(dictionary);
-
         for (Map.Entry entry: dictionary.entrySet()) {
             System.out.println(entry);
         }
-
     }
 
     public static String[] getWordList(String url) throws IOException {
@@ -47,7 +41,7 @@ public class Main {
     }
 
     public static HashMap<String, Integer> makeWordDictionary(String[] stringList) {
-        HashMap<String, Integer> dictionary = new HashMap<String, Integer>();
+        HashMap<String, Integer> dictionary = new HashMap<>();
 
         for(String word: stringList) {
             if (dictionary.containsKey(word)) {
@@ -58,6 +52,20 @@ public class Main {
                 dictionary.put(word, 1);
             }
         }
+        return dictionary;
+    }
+
+    public static HashMap<String, Integer> retrieveDictionary(ArrayList<String> pageUrls,
+                                                              HashMap<String, Integer> dictionary) throws IOException {
+
+        Random random = new Random();
+        int randomNum = random.nextInt(pageUrls.size()-1);
+        String newPage = pageUrls.get(randomNum);
+        String[] newWordList = getWordList(newPage);
+        ArrayList<String> newUrlList = pullPageLinks(newPage);
+        HashMap<String, Integer> newDict = makeWordDictionary(newWordList);
+        dictionary = dictionaryMerge(dictionary, newDict);
+
         return dictionary;
     }
 
