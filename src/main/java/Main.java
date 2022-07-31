@@ -12,31 +12,41 @@ import java.util.Random;
 
 public class Main {
 
-    final static int PAGE_CRAWL_LIMIT = 10;
-    final static String STARTING_URL = "https://en.wikipedia.org/wiki/Thalassodromeus";
+    public final static int PAGE_CRAWL_LIMIT = 1000;
+    public final static String STARTING_URL = "https://en.wikipedia.org/wiki/Thalassodromeus";
+    public final static long SLEEP_TIME = 50;
+    public static ArrayList<String> titleList = new ArrayList<>();
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
-        String[] stringList = getWordList(STARTING_URL);
+        // Bootstrap program
         ArrayList<String> pageUrls = pullPageLinks(STARTING_URL);
-        HashMap<String, Integer> dictionary = makeWordDictionary(stringList);
+        HashMap<String, Integer> dictionary = makeWordDictionary(getWordList(STARTING_URL));
         int counter = 1;
+        statusPrint(counter, STARTING_URL);
 
+        // Main loop
         while (counter < PAGE_CRAWL_LIMIT) {
-            dictionary = retrieveDictionary(pageUrls, dictionary);
-            System.out.println("Pages crawled: " + counter);
-            ++counter;
-            Thread.sleep(50L);
+            try {
+                dictionary = retrieveDictionary(counter, pageUrls, dictionary);
+                ++counter;
+                Thread.sleep(SLEEP_TIME);
+            }
+            catch (Exception exception) {
+                System.out.println(exception.getMessage());
+            }
+
         }
 
+        // Output cleaning and processing.
+        printTitles();
         cleanDictionary(dictionary);
-        for (Map.Entry entry: dictionary.entrySet()) {
-            System.out.println(entry);
-        }
+        printDictionary(dictionary);
     }
 
     public static String[] getWordList(String url) throws IOException {
         Document document = Jsoup.connect(url).get();
+        titleList.add(document.title());
         return document.text().toLowerCase().replaceAll("[^a-zA-Z ]", "").split("\\s+");
     }
 
@@ -55,18 +65,24 @@ public class Main {
         return dictionary;
     }
 
-    public static HashMap<String, Integer> retrieveDictionary(ArrayList<String> pageUrls,
+    public static HashMap<String, Integer> retrieveDictionary(int counter, ArrayList<String> pageUrls,
                                                               HashMap<String, Integer> dictionary) throws IOException {
-
         Random random = new Random();
         int randomNum = random.nextInt(pageUrls.size()-1);
         String newPage = pageUrls.get(randomNum);
-        String[] newWordList = getWordList(newPage);
-        ArrayList<String> newUrlList = pullPageLinks(newPage);
-        HashMap<String, Integer> newDict = makeWordDictionary(newWordList);
+        pageUrls.addAll(pullPageLinks(newPage));
+        pageUrls.remove(newPage);
+        HashMap<String, Integer> newDict = makeWordDictionary(getWordList(newPage));
         dictionary = dictionaryMerge(dictionary, newDict);
 
+        statusPrint(counter + 1, newPage);
+
         return dictionary;
+    }
+
+    public static void statusPrint(int counter, String url) {
+        System.out.println("Pages crawled: " + counter);
+        System.out.println("Current page: " + url);
     }
 
     public static ArrayList<String> pullPageLinks(String url) throws IOException {
@@ -118,6 +134,19 @@ public class Main {
 
     public static void cleanDictionary(HashMap<String, Integer> dictionary) {
         dictionary.entrySet().removeIf(stringIntegerEntry -> stringIntegerEntry.getKey().contains("http"));
+    }
+
+    public static void printTitles() {
+        System.out.println("Titles traversed: ");
+        for (String title: titleList) {
+            System.out.println(title);
+        }
+    }
+
+    public static void printDictionary(HashMap<String, Integer> dictionary) {
+        for (Map.Entry entry: dictionary.entrySet()) {
+            System.out.println(entry);
+        }
     }
 
 }
