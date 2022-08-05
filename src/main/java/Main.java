@@ -5,14 +5,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class Main {
 
-    public final static int PAGE_CRAWL_LIMIT = 1000;
+    public final static int PAGE_CRAWL_LIMIT = 100;
     public final static String STARTING_URL = "https://en.wikipedia.org/wiki/Thalassodromeus";
     public final static long SLEEP_TIME = 50;
     public static ArrayList<String> titleList = new ArrayList<>();
@@ -137,16 +134,33 @@ public class Main {
     }
 
     public static void printTitles() {
-        System.out.println("Titles traversed: ");
+        System.out.println("\n-- Titles traversed --");
+        int counter = 0;
         for (String title: titleList) {
-            System.out.println(title);
+            System.out.print(String.format("%-50s", title));
+            ++counter;
+            if (counter >= 15) {
+                System.out.println();
+                counter = 0;
+            }
         }
+        System.out.println();
     }
 
     public static void printDictionary(HashMap<String, Integer> dictionary) {
+        System.out.println("\n-- Words Encountered --");
+
+        int counter = 0;
         for (Map.Entry entry: dictionary.entrySet()) {
-            System.out.println(entry);
+            System.out.print(String.format("%-35s", entry));
+            ++counter;
+
+            if (counter >= 50) {
+                System.out.println();
+                counter = 0;
+            }
         }
+        System.out.println();
     }
 
 }
